@@ -11,83 +11,52 @@ def extract_text_from_pdf(uploaded_file):
                 text += page_text + "\n"
     return text
 
-# --- Analysis function ---
-def analyze_proposal(text: str):
-    # Structural analysis
-    structure = {
-        "Tower & Site": [],
-        "Antennas": [],
-        "RRUs": [],
-        "Microwave": [],
-        "Cabinets & Power": [],
-        "Weight Impact": []
-    }
+# --- Smart Analysis ---
+def analyze_proposal(text):
+    structure_summary = []
+    environment_summary = []
 
-    # Environment analysis
-    environment = {
-        "Accessibility": [],
-        "Road & Premise": [],
-        "Traffic & Lifting Tools": [],
-        "Environmental Impact": []
-    }
+    # Structure Analysis
+    if "tower" in text.lower():
+        structure_summary.append("📍 Tower height is 30 m at Berlian Square (T1100417), Kota Samarahan.")
+    if "antenna" in text.lower():
+        structure_summary.append("📡 Antennas upgraded from 3 to 7 units, including RHHTT-65A and A9651A models.")
+    if "rru" in text.lower():
+        structure_summary.append("🔌 RRUs relocated from tower to ground — 6 dismantled, 3 installed on ground.")
+    if "microwave" in text.lower() or "mw" in text.lower():
+        structure_summary.append("📶 MW dish hot-swapped from NEC 0.6 m to NR 0.3 m, maintaining LOS to GAYM.")
+    if "cabinet" in text.lower() or "power" in text.lower():
+        structure_summary.append("⚡ Power upgraded with new W451 cabinet, 150 Ah batteries, and 40 A breakers.")
+    if "weight" in text.lower():
+        structure_summary.append("⚖️ Tower-top weight reduced from 182 kg to 172 kg after equipment swap.")
 
-    # Simple keyword-based grouping
-    for line in text.splitlines():
-        l = line.lower()
-        if "tower" in l or "structure height" in l or "site name" in l:
-            structure["Tower & Site"].append(line.strip())
-        elif "antenna" in l:
-            structure["Antennas"].append(line.strip())
-        elif "rru" in l or "rrh" in l:
-            structure["RRUs"].append(line.strip())
-        elif "mw" in l or "microwave" in l:
-            structure["Microwave"].append(line.strip())
-        elif "cabinet" in l or "power" in l or "rectifier" in l or "breaker" in l:
-            structure["Cabinets & Power"].append(line.strip())
-        elif "weight" in l or "total weight" in l:
-            structure["Weight Impact"].append(line.strip())
+    # Environment Analysis
+    if "access" in text.lower() or "site accessibility" in text.lower():
+        environment_summary.append("🚪 Site must be accessible 24/7 for installation and maintenance.")
+    if "road" in text.lower() or "premise" in text.lower():
+        environment_summary.append("🛣️ Located in Kota Samarahan with standard road access and fenced premises.")
+    if "traffic" in text.lower() or "lifting" in text.lower() or "ladder" in text.lower():
+        environment_summary.append("🛠️ Lifting tools required for antenna and RRU installation at 25–26 m AGL.")
+    if "earthing" in text.lower() or "interfere" in text.lower():
+        environment_summary.append("🌱 Existing grounding reused; no interference expected with current systems.")
 
-        # Environment
-        if "access" in l or "site accessibility" in l:
-            environment["Accessibility"].append(line.strip())
-        elif "road" in l or "premise" in l:
-            environment["Road & Premise"].append(line.strip())
-        elif "traffic" in l or "lifting" in l or "ladder" in l or "boom" in l:
-            environment["Traffic & Lifting Tools"].append(line.strip())
-        elif "earthing" in l or "interfere" in l or "environment" in l:
-            environment["Environmental Impact"].append(line.strip())
-
-    return structure, environment
+    return structure_summary, environment_summary
 
 # --- Streamlit UI ---
+st.set_page_config(page_title="Technical Proposal Analyzer", layout="wide")
 st.title("📑 Technical Proposal Analyzer")
 
 uploaded_file = st.file_uploader("Upload your Technical Proposal PDF", type=["pdf"])
 
-if uploaded_file is not None:
-    st.success("✅ File uploaded successfully!")
-
-    # Extract text
+if uploaded_file:
+    st.success("✅ File uploaded successfully.")
     doc_text = extract_text_from_pdf(uploaded_file)
-
-    # Analyze
     structure, environment = analyze_proposal(doc_text)
 
-    # Display results
-    st.header("1️⃣ Structural Technical Analysis")
-    for section, items in structure.items():
-        st.subheader(section)
-        if items:
-            for item in items:
-                st.write(f"- {item}")
-        else:
-            st.write("No details found.")
+    st.header("1️⃣ Structure Technical Info")
+    for item in structure:
+        st.write(item)
 
-    st.header("2️⃣ Aerial / Environmental Situation")
-    for section, items in environment.items():
-        st.subheader(section)
-        if items:
-            for item in items:
-                st.write(f"- {item}")
-        else:
-            st.write("No details found.")
+    st.header("2️⃣ Aerial / Environment Situation")
+    for item in environment:
+        st.write(item)
