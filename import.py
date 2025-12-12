@@ -1,3 +1,5 @@
+import streamlit as st
+import pdfplumber
 import re
 
 def summarize_proposal(text: str):
@@ -21,23 +23,35 @@ def summarize_proposal(text: str):
         if any(word.lower() in line.lower() for word in environment_keywords):
             summary["Aerial/Environment Situation"].append(line.strip())
 
-    # --- Format Output ---
-    print("\n=== SUMMARY REPORT ===\n")
-    print("1. STRUCTURE TECHNICAL INFO")
-    for item in summary["Structure Technical Info"]:
-        print(f"- {item}")
-
-    print("\n2. AERIAL / ENVIRONMENT SITUATION")
-    for item in summary["Aerial/Environment Situation"]:
-        print(f"- {item}")
-
     return summary
 
+def extract_text_from_pdf(uploaded_file):
+    text = ""
+    with pdfplumber.open(uploaded_file) as pdf:
+        for page in pdf.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n"
+    return text
 
-# Example usage:
-if __name__ == "__main__":
-    # Replace with actual text extraction from PDF
-    with open("proposal_text.txt", "r", encoding="utf-8") as f:
-        doc_text = f.read()
+# --- Streamlit UI ---
+st.title("📑 Technical Proposal Summarizer")
 
-    summarize_proposal(doc_text)
+uploaded_file = st.file_uploader("Upload your Technical Proposal PDF", type=["pdf"])
+
+if uploaded_file is not None:
+    st.success("✅ File uploaded successfully!")
+
+    # Extract text
+    doc_text = extract_text_from_pdf(uploaded_file)
+
+    # Summarize
+    summary = summarize_proposal(doc_text)
+
+    st.subheader("1️⃣ Structure Technical Info")
+    for item in summary["Structure Technical Info"]:
+        st.write(f"- {item}")
+
+    st.subheader("2️⃣ Aerial / Environment Situation")
+    for item in summary["Aerial/Environment Situation"]:
+        st.write(f"- {item}")
