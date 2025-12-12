@@ -1,3 +1,5 @@
 streamlit
 pdfplumber
 matplotlib
+fpdf
+reportlab
