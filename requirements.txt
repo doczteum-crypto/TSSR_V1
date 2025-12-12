@@ -3,3 +3,4 @@ pdfplumber
 matplotlib
 fpdf
 reportlab
+pandas
