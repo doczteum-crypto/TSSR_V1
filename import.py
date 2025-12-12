@@ -1,6 +1,7 @@
-import pdfplumber
 import streamlit as st
+import pdfplumber
 
+# --- Extract text from PDF ---
 def extract_text_from_pdf(uploaded_file):
     text = ""
     with pdfplumber.open(uploaded_file) as pdf:
@@ -10,58 +11,83 @@ def extract_text_from_pdf(uploaded_file):
                 text += page_text + "\n"
     return text
 
-def summarize_proposal(text: str):
-    structure_summary = {
-        "Tower": [],
+# --- Analysis function ---
+def analyze_proposal(text: str):
+    # Structural analysis
+    structure = {
+        "Tower & Site": [],
         "Antennas": [],
-        "RRU": [],
-        "MW": [],
-        "Cabinet/Power": []
+        "RRUs": [],
+        "Microwave": [],
+        "Cabinets & Power": [],
+        "Weight Impact": []
     }
-    environment_summary = []
 
-    # --- Structure parsing ---
+    # Environment analysis
+    environment = {
+        "Accessibility": [],
+        "Road & Premise": [],
+        "Traffic & Lifting Tools": [],
+        "Environmental Impact": []
+    }
+
+    # Simple keyword-based grouping
     for line in text.splitlines():
         l = line.lower()
-        if "tower" in l or "structure height" in l:
-            structure_summary["Tower"].append(line.strip())
+        if "tower" in l or "structure height" in l or "site name" in l:
+            structure["Tower & Site"].append(line.strip())
         elif "antenna" in l:
-            structure_summary["Antennas"].append(line.strip())
+            structure["Antennas"].append(line.strip())
         elif "rru" in l or "rrh" in l:
-            structure_summary["RRU"].append(line.strip())
+            structure["RRUs"].append(line.strip())
         elif "mw" in l or "microwave" in l:
-            structure_summary["MW"].append(line.strip())
+            structure["Microwave"].append(line.strip())
         elif "cabinet" in l or "power" in l or "rectifier" in l or "breaker" in l:
-            structure_summary["Cabinet/Power"].append(line.strip())
+            structure["Cabinets & Power"].append(line.strip())
+        elif "weight" in l or "total weight" in l:
+            structure["Weight Impact"].append(line.strip())
 
-        # --- Environment parsing ---
-        if any(word in l for word in ["road", "access", "traffic", "lifting", "site accessibility", "workers", "installation"]):
-            environment_summary.append(line.strip())
+        # Environment
+        if "access" in l or "site accessibility" in l:
+            environment["Accessibility"].append(line.strip())
+        elif "road" in l or "premise" in l:
+            environment["Road & Premise"].append(line.strip())
+        elif "traffic" in l or "lifting" in l or "ladder" in l or "boom" in l:
+            environment["Traffic & Lifting Tools"].append(line.strip())
+        elif "earthing" in l or "interfere" in l or "environment" in l:
+            environment["Environmental Impact"].append(line.strip())
 
-    # --- Format summaries ---
-    formatted_structure = {
-        section: "\n".join([f"- {item}" for item in items]) if items else "No details found"
-        for section, items in structure_summary.items()
-    }
-    formatted_environment = "\n".join([f"- {item}" for item in environment_summary]) if environment_summary else "No environment info found"
-
-    return formatted_structure, formatted_environment
-
+    return structure, environment
 
 # --- Streamlit UI ---
-st.title("📑 Technical Proposal Summarizer")
+st.title("📑 Technical Proposal Analyzer")
 
 uploaded_file = st.file_uploader("Upload your Technical Proposal PDF", type=["pdf"])
 
 if uploaded_file is not None:
     st.success("✅ File uploaded successfully!")
 
+    # Extract text
     doc_text = extract_text_from_pdf(uploaded_file)
-    structure, environment = summarize_proposal(doc_text)
 
-    st.subheader("1️⃣ Structure Technical Info")
-    for section, details in structure.items():
-        st.markdown(f"**{section}**\n{details}")
+    # Analyze
+    structure, environment = analyze_proposal(doc_text)
 
-    st.subheader("2️⃣ Aerial / Environment Situation")
-    st.markdown(environment)
+    # Display results
+    st.header("1️⃣ Structural Technical Analysis")
+    for section, items in structure.items():
+        st.subheader(section)
+        if items:
+            for item in items:
+                st.write(f"- {item}")
+        else:
+            st.write("No details found.")
+
+    st.header("2️⃣ Aerial / Environmental Situation")
+    for section, items in environment.items():
+        st.subheader(section)
+        if items:
+            for item in items:
+                st.write(f"- {item}")
+        else:
+            st.write("No details found.")
