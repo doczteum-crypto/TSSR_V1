@@ -1,1 +1,6 @@
-
+streamlit
+pdfplumber
+matplotlib
+fpdf
+reportlab
+pandas
